@@ -1,0 +1,5 @@
+db.host=localhost
+db.port=5665
+db.name=user_authorization
+db.username=postgres
+db.password=postgres
