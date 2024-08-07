@@ -16,3 +16,6 @@ spring.boot.admin.client.url=http://localhost:8084/
 spring.boot.admin.client.instance.management-url=http://localhost:8082/actuator
 spring.boot.admin.client.instance.service-url=http://localhost:8082/
 spring.boot.admin.client.instance.health-url=http://localhost:8082/actuator/health
+
+security.jwt.secret-key=""
+security.jwt.expiration-time=300000
