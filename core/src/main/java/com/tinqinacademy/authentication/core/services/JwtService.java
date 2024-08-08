@@ -21,7 +21,7 @@ public class JwtService {
     private String secretKey;
 
     @Value("${security.jwt.expiration-time}")
-    private long jwtExpiration;
+    private Long jwtExpiration;
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -40,7 +40,7 @@ public class JwtService {
         return buildToken(extraClaims, userDetails, jwtExpiration);
     }
 
-    public long getExpirationTime() {
+    public Long getExpirationTime() {
         return jwtExpiration;
     }
 
@@ -59,12 +59,12 @@ public class JwtService {
                 .compact();
     }
 
-    public boolean isTokenValid(String token, UserDetails userDetails) {
+    public Boolean isTokenValid(String token, String userDetailsName) {
         final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+        return (username.equals(userDetailsName) && !isTokenExpired(token));
     }
 
-    private boolean isTokenExpired(String token) {
+    private Boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
 

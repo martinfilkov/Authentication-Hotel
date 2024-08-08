@@ -3,6 +3,7 @@ package com.tinqinacademy.authentication.api.operations.exceptions;
 import com.tinqinacademy.authentication.api.operations.base.Errors;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 
@@ -14,6 +15,6 @@ import java.util.List;
 @ToString
 public class ErrorWrapper implements Errors {
     private List<ErrorResponse> errors;
-    private Date timestamp;
+    private LocalDate timestamp;
     private Integer code;
 }

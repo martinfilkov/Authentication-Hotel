@@ -1,4 +1,4 @@
-package com.tinqinacademy.authentication.api.operations.operations.login;
+package com.tinqinacademy.authentication.api.operations.operations.extract;
 
 import com.tinqinacademy.authentication.api.operations.base.OperationOutput;
 import lombok.*;
@@ -9,6 +9,6 @@ import lombok.*;
 @Setter
 @Builder
 @ToString
-public class LoginUserOutput implements OperationOutput {
-    private String token;
+public class ExtractUserOutput implements OperationOutput {
+    private String username;
 }
