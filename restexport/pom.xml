@@ -7,11 +7,16 @@
         <artifactId>authentication</artifactId>
         <version>${revision}</version>
     </parent>
-    <artifactId>domain</artifactId>
+    <artifactId>restexport</artifactId>
     <version>${revision}</version>
-    <name>domain</name>
-    <description>Authentication Domain Module</description>
+    <name>restexport</name>
+    <description>Rest export Api Module</description>
 
     <dependencies>
+        <dependency>
+            <groupId>com.tinqinacademy.authentication</groupId>
+            <artifactId>api</artifactId>
+            <version>${revision}</version>
+        </dependency>
     </dependencies>
 </project>
