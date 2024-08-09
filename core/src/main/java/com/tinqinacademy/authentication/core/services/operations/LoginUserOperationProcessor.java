@@ -1,6 +1,7 @@
 package com.tinqinacademy.authentication.core.services.operations;
 
 import com.tinqinacademy.authentication.api.operations.base.Errors;
+import com.tinqinacademy.authentication.api.operations.exceptions.NotFoundException;
 import com.tinqinacademy.authentication.api.operations.operations.login.LoginUserInput;
 import com.tinqinacademy.authentication.api.operations.operations.login.LoginUserOperation;
 import com.tinqinacademy.authentication.api.operations.operations.login.LoginUserOutput;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 import java.util.Optional;
 
 import static io.vavr.API.*;
+import static io.vavr.Predicates.instanceOf;
 
 @Slf4j
 @Service
@@ -71,6 +73,7 @@ public class LoginUserOperationProcessor extends BaseOperationProcessor implemen
                 })
                 .toEither()
                 .mapLeft(throwable -> Match(throwable).of(
+                        Case($(instanceOf(NotFoundException.class)), ex -> errorMapper.handleError(ex, HttpStatus.NOT_FOUND)),
                         Case($(), ex -> errorMapper.handleError(ex, HttpStatus.BAD_REQUEST))
                 ));
     }
@@ -78,7 +81,7 @@ public class LoginUserOperationProcessor extends BaseOperationProcessor implemen
     private User getUserWithIfUsernameExists(LoginUserInput input){
         Optional<User> userWithUsername = userRepository.findByUsername(input.getUsername());
         if (userWithUsername.isEmpty())
-            throw new RuntimeException(String.format("User with username %s does not exist", input.getUsername()));
+            throw new NotFoundException(String.format("User with username %s does not exist", input.getUsername()));
         return userWithUsername.get();
     }
 }

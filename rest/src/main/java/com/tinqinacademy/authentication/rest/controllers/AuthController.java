@@ -20,8 +20,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.vavr.control.Either;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -69,10 +68,15 @@ public class AuthController extends BaseController {
             @ApiResponse(responseCode = "201", description = "Successfully logged user"),
             @ApiResponse(responseCode = "403", description = "User not authorized")
     })
-    @PostMapping(AuthenticationMappings.LOGIN_USER)
-    public ResponseEntity<?> loginUser(@RequestBody LoginUserInput input, HttpServletResponse httpServletResponse){
+    @PostMapping(value = AuthenticationMappings.LOGIN_USER)
+    public ResponseEntity<?> loginUser(@RequestBody LoginUserInput input){
         Either<Errors, LoginUserOutput> output = loginUserOperationProcessor.process(input);
-//        httpServletResponse.addHeader("token", output.get().getToken());
-        return handleResponse(output, HttpStatus.CREATED);
+        if (output.isLeft()) {
+            Errors errors = output.getLeft();
+            return new ResponseEntity<>(errors, HttpStatusCode.valueOf(errors.getCode()));
+        }
+        HttpHeaders headers = new HttpHeaders();
+        headers.add(HttpHeaders.AUTHORIZATION, "Bearer " + output.get().getToken());
+        return new ResponseEntity<>(output.get(), headers, HttpStatus.CREATED);
     }
 }

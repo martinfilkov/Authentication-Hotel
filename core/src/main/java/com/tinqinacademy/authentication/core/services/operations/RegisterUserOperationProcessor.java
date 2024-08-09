@@ -1,6 +1,7 @@
 package com.tinqinacademy.authentication.core.services.operations;
 
 import com.tinqinacademy.authentication.api.operations.base.Errors;
+import com.tinqinacademy.authentication.api.operations.exceptions.NotAvailableException;
 import com.tinqinacademy.authentication.api.operations.operations.register.RegisterUserInput;
 import com.tinqinacademy.authentication.api.operations.operations.register.RegisterUserOperation;
 import com.tinqinacademy.authentication.api.operations.operations.register.RegisterUserOutput;
@@ -22,6 +23,7 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 import static io.vavr.API.*;
+import static io.vavr.Predicates.instanceOf;
 
 @Slf4j
 @Service
@@ -71,7 +73,9 @@ public class RegisterUserOperationProcessor extends BaseOperationProcessor imple
                     return output;
                 })
                 .toEither()
+
                 .mapLeft(throwable -> Match(throwable).of(
+                        Case($(instanceOf(NotAvailableException.class)), ex -> errorMapper.handleError(ex, HttpStatus.CONFLICT)),
                         Case($(), ex -> errorMapper.handleError(ex, HttpStatus.BAD_REQUEST))
                 ));
     }
@@ -79,12 +83,12 @@ public class RegisterUserOperationProcessor extends BaseOperationProcessor imple
     private void checkIfUserWithUsernameExists(RegisterUserInput input){
         Optional<User> userWithUsername = userRepository.findByUsername(input.getUsername());
         if (userWithUsername.isPresent())
-            throw new RuntimeException(String.format("User with username %s already exists", input.getUsername()));
+            throw new NotAvailableException(String.format("User with username %s already exists", input.getUsername()));
     }
 
     private void checkIfUserWithEmailExists(RegisterUserInput input){
         Optional<User> userWithEmail = userRepository.findByEmail(input.getEmail());
         if (userWithEmail.isPresent())
-            throw new RuntimeException(String.format("User with email %s already exists", input.getEmail()));
+            throw new NotAvailableException(String.format("User with email %s already exists", input.getEmail()));
     }
 }
