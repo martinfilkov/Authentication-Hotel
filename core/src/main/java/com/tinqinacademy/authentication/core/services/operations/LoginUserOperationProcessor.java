@@ -5,10 +5,9 @@ import com.tinqinacademy.authentication.api.operations.exceptions.NotFoundExcept
 import com.tinqinacademy.authentication.api.operations.operations.login.LoginUserInput;
 import com.tinqinacademy.authentication.api.operations.operations.login.LoginUserOperation;
 import com.tinqinacademy.authentication.api.operations.operations.login.LoginUserOutput;
-import com.tinqinacademy.authentication.api.operations.operations.register.RegisterUserInput;
 import com.tinqinacademy.authentication.core.ErrorMapper;
 import com.tinqinacademy.authentication.core.services.BaseOperationProcessor;
-import com.tinqinacademy.authentication.core.services.JwtService;
+import com.tinqinacademy.authentication.core.services.security.JwtService;
 import com.tinqinacademy.authentication.persistence.entities.User;
 import com.tinqinacademy.authentication.persistence.repositories.UserRepository;
 import io.vavr.control.Either;
@@ -17,10 +16,10 @@ import jakarta.validation.Validator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
 import java.util.Optional;
 
 import static io.vavr.API.*;
@@ -30,18 +29,19 @@ import static io.vavr.Predicates.instanceOf;
 @Service
 public class LoginUserOperationProcessor extends BaseOperationProcessor implements LoginUserOperation {
     private final UserRepository userRepository;
-    private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final PasswordEncoder passwordEncoder;
 
     public LoginUserOperationProcessor(ConversionService conversionService,
                                        Validator validator,
                                        ErrorMapper errorMapper,
                                        UserRepository userRepository,
-                                       AuthenticationManager authenticationManager, JwtService jwtService) {
+                                       JwtService jwtService,
+                                       PasswordEncoder passwordEncoder) {
         super(conversionService, validator, errorMapper);
         this.userRepository = userRepository;
-        this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -53,16 +53,13 @@ public class LoginUserOperationProcessor extends BaseOperationProcessor implemen
     private Either<Errors, LoginUserOutput> loginUser(LoginUserInput input) {
         return Try.of(() -> {
                     log.info("Start loginUser with input: {}", input);
-                    authenticationManager.authenticate(
-                            new UsernamePasswordAuthenticationToken(
-                                    input.getUsername(),
-                                    input.getPassword()
-                            )
-                    );
-
                     User user = getUserWithIfUsernameExists(input);
 
-                    String jwtToken = jwtService.generateToken(user);
+                    checkIfUserCredentialsMatch(input, user);
+
+                    String jwtToken = jwtService.generateToken(Map.of(
+                            "user_id", user.getId().toString(),
+                            "role", user.getRoleType().toString()));
 
                     LoginUserOutput output = LoginUserOutput.builder()
                             .token(jwtToken)
@@ -78,7 +75,14 @@ public class LoginUserOperationProcessor extends BaseOperationProcessor implemen
                 ));
     }
 
-    private User getUserWithIfUsernameExists(LoginUserInput input){
+
+    private void checkIfUserCredentialsMatch(LoginUserInput input, User user) {
+        if (!passwordEncoder.matches(input.getPassword(), user.getPassword())) {
+            throw new NotFoundException("User password is not matching");
+        }
+    }
+
+    private User getUserWithIfUsernameExists(LoginUserInput input) {
         Optional<User> userWithUsername = userRepository.findByUsername(input.getUsername());
         if (userWithUsername.isEmpty())
             throw new NotFoundException(String.format("User with username %s does not exist", input.getUsername()));

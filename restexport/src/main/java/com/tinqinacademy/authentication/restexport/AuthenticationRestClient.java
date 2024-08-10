@@ -8,20 +8,13 @@ import com.tinqinacademy.authentication.api.operations.operations.login.LoginUse
 import com.tinqinacademy.authentication.api.operations.operations.login.LoginUserOutput;
 import com.tinqinacademy.authentication.api.operations.operations.register.RegisterUserInput;
 import com.tinqinacademy.authentication.api.operations.operations.register.RegisterUserOutput;
+import com.tinqinacademy.authentication.api.operations.operations.validate.ValidateUserInput;
+import com.tinqinacademy.authentication.api.operations.operations.validate.ValidateUserOutput;
 import feign.Headers;
 import feign.RequestLine;
 
 @Headers({"Content-Type: application/json"})
 public interface AuthenticationRestClient {
-    @RequestLine("POST /api/auth/authenticate")
-    AuthenticateUserOutput authenticateUser(AuthenticateUserInput input);
-
-    @RequestLine("POST /api/auth/generate-token")
-    GenerateTokenOutput generateToken(GenerateTokenInput input);
-
-    @RequestLine("POST /api/auth/register")
-    RegisterUserOutput registerUser(RegisterUserInput input);
-
-    @RequestLine("POST /api/auth/login")
-    LoginUserOutput loginUser(LoginUserInput input);
+    @RequestLine("POST /api/auth/validate-token")
+    ValidateUserOutput validateUser(ValidateUserInput input);
 }
