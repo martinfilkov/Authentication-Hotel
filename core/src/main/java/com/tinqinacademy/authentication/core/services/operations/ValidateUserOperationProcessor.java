@@ -6,7 +6,7 @@ import com.tinqinacademy.authentication.api.operations.operations.validate.Valid
 import com.tinqinacademy.authentication.api.operations.operations.validate.ValidateUserOutput;
 import com.tinqinacademy.authentication.core.ErrorMapper;
 import com.tinqinacademy.authentication.core.services.BaseOperationProcessor;
-import com.tinqinacademy.authentication.core.services.JwtService;
+import com.tinqinacademy.authentication.core.services.security.JwtService;
 import io.vavr.control.Either;
 import io.vavr.control.Try;
 import jakarta.validation.Validator;
@@ -42,7 +42,7 @@ public class ValidateUserOperationProcessor extends BaseOperationProcessor imple
                     Boolean isValid = jwtService.isTokenValid(input.getToken(), input.getUsername());
 
                     ValidateUserOutput output = ValidateUserOutput.builder()
-                            .isValid(isValid)
+                            .validity(isValid)
                             .build();
 
                     log.info("End validateUser with output: {}", output);

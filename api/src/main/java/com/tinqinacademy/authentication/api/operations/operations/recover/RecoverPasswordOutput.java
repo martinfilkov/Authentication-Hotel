@@ -1,14 +1,12 @@
 package com.tinqinacademy.authentication.api.operations.operations.recover;
 
 import com.tinqinacademy.authentication.api.operations.base.OperationOutput;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
 @NoArgsConstructor
 @Getter
 @Setter
+@Builder
 @ToString
 public class RecoverPasswordOutput implements OperationOutput {
 }

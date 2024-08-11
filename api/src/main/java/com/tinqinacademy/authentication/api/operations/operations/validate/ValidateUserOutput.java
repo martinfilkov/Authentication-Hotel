@@ -10,5 +10,5 @@ import lombok.*;
 @Builder
 @ToString
 public class ValidateUserOutput implements OperationOutput {
-    private boolean isValid;
+    private Boolean validity;
 }
