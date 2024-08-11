@@ -61,13 +61,8 @@ public class RegisterUserOperationProcessor extends BaseOperationProcessor imple
                     checkIfUserWithUsernameExists(input);
                     checkIfUserWithEmailExists(input);
 
-                    User user = User.builder()
-                            .username(input.getUsername())
+                    User user = conversionService.convert(input, User.UserBuilder.class)
                             .password(passwordEncoder.encode(input.getPassword()))
-                            .email(input.getEmail())
-                            .roleType(RoleType.USER)
-                            .birthDate(input.getBirthDate())
-                            .phoneNumber(input.getPhoneNumber())
                             .build();
 
                     User savedUser = userRepository.save(user);
