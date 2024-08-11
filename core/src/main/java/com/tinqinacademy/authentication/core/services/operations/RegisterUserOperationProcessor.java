@@ -7,13 +7,16 @@ import com.tinqinacademy.authentication.api.operations.operations.register.Regis
 import com.tinqinacademy.authentication.api.operations.operations.register.RegisterUserOutput;
 import com.tinqinacademy.authentication.core.ErrorMapper;
 import com.tinqinacademy.authentication.core.services.BaseOperationProcessor;
+import com.tinqinacademy.authentication.persistence.entities.RegistrationCode;
 import com.tinqinacademy.authentication.persistence.entities.User;
 import com.tinqinacademy.authentication.persistence.models.RoleType;
+import com.tinqinacademy.authentication.persistence.repositories.RegistrationCodeRepository;
 import com.tinqinacademy.authentication.persistence.repositories.UserRepository;
 import io.vavr.control.Either;
 import io.vavr.control.Try;
 import jakarta.validation.Validator;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.UUID;
 
 import static io.vavr.API.*;
 import static io.vavr.Predicates.instanceOf;
@@ -29,15 +33,18 @@ import static io.vavr.Predicates.instanceOf;
 @Service
 public class RegisterUserOperationProcessor extends BaseOperationProcessor implements RegisterUserOperation {
     private final UserRepository userRepository;
+    private final RegistrationCodeRepository registrationCodeRepository;
     private final PasswordEncoder passwordEncoder;
 
     public RegisterUserOperationProcessor(ConversionService conversionService,
                                           Validator validator,
                                           ErrorMapper errorMapper,
                                           UserRepository userRepository,
+                                          RegistrationCodeRepository registrationCodeRepository,
                                           PasswordEncoder passwordEncoder) {
         super(conversionService, validator, errorMapper);
         this.userRepository = userRepository;
+        this.registrationCodeRepository = registrationCodeRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -65,6 +72,13 @@ public class RegisterUserOperationProcessor extends BaseOperationProcessor imple
 
                     User savedUser = userRepository.save(user);
 
+                    RegistrationCode registrationCode = RegistrationCode.builder()
+                            .code(RandomStringUtils.randomAlphanumeric(12))
+                            .email(savedUser.getEmail())
+                            .build();
+
+                    registrationCodeRepository.save(registrationCode);
+
                     RegisterUserOutput output = RegisterUserOutput.builder()
                             .id(savedUser.getId())
                             .build();
@@ -73,7 +87,6 @@ public class RegisterUserOperationProcessor extends BaseOperationProcessor imple
                     return output;
                 })
                 .toEither()
-
                 .mapLeft(throwable -> Match(throwable).of(
                         Case($(instanceOf(NotAvailableException.class)), ex -> errorMapper.handleError(ex, HttpStatus.CONFLICT)),
                         Case($(), ex -> errorMapper.handleError(ex, HttpStatus.BAD_REQUEST))

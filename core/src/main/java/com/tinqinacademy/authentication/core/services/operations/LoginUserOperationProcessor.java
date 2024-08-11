@@ -1,6 +1,7 @@
 package com.tinqinacademy.authentication.core.services.operations;
 
 import com.tinqinacademy.authentication.api.operations.base.Errors;
+import com.tinqinacademy.authentication.api.operations.exceptions.NotAvailableException;
 import com.tinqinacademy.authentication.api.operations.exceptions.NotFoundException;
 import com.tinqinacademy.authentication.api.operations.operations.login.LoginUserInput;
 import com.tinqinacademy.authentication.api.operations.operations.login.LoginUserOperation;
@@ -8,7 +9,9 @@ import com.tinqinacademy.authentication.api.operations.operations.login.LoginUse
 import com.tinqinacademy.authentication.core.ErrorMapper;
 import com.tinqinacademy.authentication.core.services.BaseOperationProcessor;
 import com.tinqinacademy.authentication.core.services.security.JwtService;
+import com.tinqinacademy.authentication.persistence.entities.RegistrationCode;
 import com.tinqinacademy.authentication.persistence.entities.User;
+import com.tinqinacademy.authentication.persistence.repositories.RegistrationCodeRepository;
 import com.tinqinacademy.authentication.persistence.repositories.UserRepository;
 import io.vavr.control.Either;
 import io.vavr.control.Try;
@@ -29,6 +32,7 @@ import static io.vavr.Predicates.instanceOf;
 @Service
 public class LoginUserOperationProcessor extends BaseOperationProcessor implements LoginUserOperation {
     private final UserRepository userRepository;
+    private final RegistrationCodeRepository registrationCodeRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
 
@@ -36,10 +40,12 @@ public class LoginUserOperationProcessor extends BaseOperationProcessor implemen
                                        Validator validator,
                                        ErrorMapper errorMapper,
                                        UserRepository userRepository,
+                                       RegistrationCodeRepository registrationCodeRepository,
                                        JwtService jwtService,
                                        PasswordEncoder passwordEncoder) {
         super(conversionService, validator, errorMapper);
         this.userRepository = userRepository;
+        this.registrationCodeRepository = registrationCodeRepository;
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
     }
@@ -56,6 +62,7 @@ public class LoginUserOperationProcessor extends BaseOperationProcessor implemen
                     User user = getUserWithIfUsernameExists(input);
 
                     checkIfUserCredentialsMatch(input, user);
+                    checkIfUserIsConfirmed(user);
 
                     String jwtToken = jwtService.generateToken(Map.of(
                             "user_id", user.getId().toString(),
@@ -71,6 +78,7 @@ public class LoginUserOperationProcessor extends BaseOperationProcessor implemen
                 .toEither()
                 .mapLeft(throwable -> Match(throwable).of(
                         Case($(instanceOf(NotFoundException.class)), ex -> errorMapper.handleError(ex, HttpStatus.NOT_FOUND)),
+                        Case($(instanceOf(NotAvailableException.class)), ex -> errorMapper.handleError(ex, HttpStatus.CONFLICT)),
                         Case($(), ex -> errorMapper.handleError(ex, HttpStatus.BAD_REQUEST))
                 ));
     }
@@ -79,6 +87,13 @@ public class LoginUserOperationProcessor extends BaseOperationProcessor implemen
     private void checkIfUserCredentialsMatch(LoginUserInput input, User user) {
         if (!passwordEncoder.matches(input.getPassword(), user.getPassword())) {
             throw new NotFoundException("User password is not matching");
+        }
+    }
+
+    private void checkIfUserIsConfirmed(User user){
+        Optional<RegistrationCode> registrationCode = registrationCodeRepository.findByEmail(user.getEmail());
+        if (registrationCode.isPresent()) {
+            throw new NotAvailableException(String.format("User with email %s is not confirmed", user.getEmail()));
         }
     }
 
