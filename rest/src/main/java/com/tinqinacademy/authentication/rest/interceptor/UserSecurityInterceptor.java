@@ -35,6 +35,11 @@ public class UserSecurityInterceptor implements HandlerInterceptor {
         }
 
         String jwtToken = authorization.substring(7);
+        if (!jwtService.isTokenValid(jwtToken)){
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.getWriter().write("UNAUTHORIZED Token is expired");
+            return false;
+        }
 
         Claims claims = jwtService.extractAllClaims(jwtToken);
         String userId = claims.get("user_id").toString();

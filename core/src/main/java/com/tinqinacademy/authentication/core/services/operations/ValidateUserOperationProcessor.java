@@ -39,7 +39,7 @@ public class ValidateUserOperationProcessor extends BaseOperationProcessor imple
     private Either<Errors, ValidateUserOutput> validateUser(ValidateUserInput input) {
         return Try.of(() -> {
                     log.info("Start validateUser with input: {}", input);
-                    Boolean isValid = jwtService.isTokenValid(input.getToken(), input.getUsername());
+                    Boolean isValid = jwtService.isTokenValid(input.getToken());
 
                     ValidateUserOutput output = ValidateUserOutput.builder()
                             .validity(isValid)
@@ -49,8 +49,6 @@ public class ValidateUserOperationProcessor extends BaseOperationProcessor imple
                     return output;
                 })
                 .toEither()
-                .mapLeft(throwable -> Match(throwable).of(
-                        Case($(), ex -> errorMapper.handleError(ex, HttpStatus.BAD_REQUEST))
-                ));
+                .mapLeft(throwable -> errorMapper.handleError(throwable, HttpStatus.BAD_REQUEST));
     }
 }

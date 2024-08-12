@@ -8,5 +8,5 @@ import feign.RequestLine;
 @Headers({"Content-Type: application/json"})
 public interface AuthenticationRestClient {
     @RequestLine("POST /api/auth/validate-token")
-    ValidateUserOutput validateUser(ValidateUserInput input);
+    ValidateUserOutput validateToken(ValidateUserInput input);
 }

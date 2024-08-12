@@ -4,6 +4,7 @@ import com.tinqinacademy.authentication.api.operations.base.OperationInput;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -18,6 +19,7 @@ public class RegisterUserInput implements OperationInput {
     @NotBlank(message = "Username cannot be blank")
     private String username;
 
+    @Size(min = 8, message = "Password must be at least 8 characters")
     @NotBlank(message = "Password cannot be blank")
     private String password;
 
