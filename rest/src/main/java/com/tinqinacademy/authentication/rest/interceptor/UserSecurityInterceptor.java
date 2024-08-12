@@ -55,6 +55,7 @@ public class UserSecurityInterceptor implements HandlerInterceptor {
             if (!userOptional.get().getRoleType().equals(RoleType.ADMIN)) {
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                 response.getWriter().write("UNAUTHORIZED User must be admin to access this endpoint");
+                return false;
             }
         }
 

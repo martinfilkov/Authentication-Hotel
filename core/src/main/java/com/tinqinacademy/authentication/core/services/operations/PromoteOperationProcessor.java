@@ -1,6 +1,7 @@
 package com.tinqinacademy.authentication.core.services.operations;
 
 import com.tinqinacademy.authentication.api.operations.base.Errors;
+import com.tinqinacademy.authentication.api.operations.exceptions.NotAvailableException;
 import com.tinqinacademy.authentication.api.operations.exceptions.NotFoundException;
 import com.tinqinacademy.authentication.api.operations.operations.promote.PromoteUserInput;
 import com.tinqinacademy.authentication.api.operations.operations.promote.PromoteUserOperation;
@@ -47,6 +48,9 @@ public class PromoteOperationProcessor extends BaseOperationProcessor implements
         return Try.of(() -> {
                     log.info("Start promoteUser with input: {}", input);
                     User user = getUserIfExists(input);
+
+                    checkIfUserAlreadyAdmin(user);
+
                     user.setRoleType(RoleType.ADMIN);
                     userRepository.save(user);
 
@@ -57,6 +61,7 @@ public class PromoteOperationProcessor extends BaseOperationProcessor implements
                 .toEither()
                 .mapLeft(throwable -> Match(throwable).of(
                         Case($(instanceOf(NotFoundException.class)), ex -> errorMapper.handleError(ex, HttpStatus.NOT_FOUND)),
+                        Case($(instanceOf(NotAvailableException.class)), ex -> errorMapper.handleError(ex, HttpStatus.CONFLICT)),
                         Case($(), ex -> errorMapper.handleError(ex, HttpStatus.BAD_REQUEST))
                 ));
     }
@@ -67,5 +72,11 @@ public class PromoteOperationProcessor extends BaseOperationProcessor implements
             throw new NotFoundException(String.format("User with id %s not found", input.getUserId()));
         }
         return userOptional.get();
+    }
+
+    private void checkIfUserAlreadyAdmin(User user){
+        if (user.getRoleType() == RoleType.ADMIN){
+            throw new NotAvailableException("User already admin");
+        }
     }
 }
