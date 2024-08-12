@@ -21,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 import static io.vavr.API.*;
@@ -57,6 +58,7 @@ public class RegisterUserOperationProcessor extends BaseOperationProcessor imple
 
                     checkIfUserWithUsernameExists(input);
                     checkIfUserWithEmailExists(input);
+                    checkIfUserIsAdult(input);
 
                     User user = conversionService.convert(input, User.UserBuilder.class)
                             .password(passwordEncoder.encode(input.getPassword()))
@@ -96,6 +98,12 @@ public class RegisterUserOperationProcessor extends BaseOperationProcessor imple
         Optional<User> userWithEmail = userRepository.findByEmail(input.getEmail());
         if (userWithEmail.isPresent()) {
             throw new NotAvailableException(String.format("User with email %s already exists", input.getEmail()));
+        }
+    }
+
+    private void checkIfUserIsAdult(RegisterUserInput input) {
+        if (input.getBirthDate().isAfter(LocalDate.now().minusYears(18))){
+            throw new NotAvailableException("You need to be at least 18 to register");
         }
     }
 }
