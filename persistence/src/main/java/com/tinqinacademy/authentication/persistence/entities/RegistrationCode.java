@@ -21,7 +21,7 @@ public class RegistrationCode {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "code", unique = true, nullable = false)
+    @Column(name = "code", nullable = false)
     private String code;
 
     @Column(name = "email", nullable = false, unique = true, length = 64)

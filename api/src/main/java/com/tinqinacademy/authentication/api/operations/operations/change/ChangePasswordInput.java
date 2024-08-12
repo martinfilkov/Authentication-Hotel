@@ -3,6 +3,7 @@ package com.tinqinacademy.authentication.api.operations.operations.change;
 import com.tinqinacademy.authentication.api.operations.base.OperationInput;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 @NoArgsConstructor
@@ -12,9 +13,11 @@ import lombok.*;
 @Builder
 @ToString
 public class ChangePasswordInput implements OperationInput {
+    @Size(min = 8, message = "Password must be at least 8 characters")
     @NotBlank(message = "Old password is required")
     private String oldPassword;
 
+    @Size(min = 8, message = "Password must be at least 8 characters")
     @NotBlank(message = "New password cannot be null")
     private String newPassword;
 

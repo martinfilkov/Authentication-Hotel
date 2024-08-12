@@ -13,7 +13,4 @@ import lombok.*;
 public class ValidateUserInput implements OperationInput {
     @NotBlank(message = "Token cannot be null")
     private String token;
-
-    @NotBlank(message = "Username cannot be null")
-    private String username;
 }

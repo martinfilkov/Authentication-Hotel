@@ -9,7 +9,6 @@ import com.tinqinacademy.authentication.core.ErrorMapper;
 import com.tinqinacademy.authentication.core.services.BaseOperationProcessor;
 import com.tinqinacademy.authentication.persistence.entities.RegistrationCode;
 import com.tinqinacademy.authentication.persistence.entities.User;
-import com.tinqinacademy.authentication.persistence.models.RoleType;
 import com.tinqinacademy.authentication.persistence.repositories.RegistrationCodeRepository;
 import com.tinqinacademy.authentication.persistence.repositories.UserRepository;
 import io.vavr.control.Either;
@@ -22,9 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.util.Optional;
-import java.util.UUID;
 
 import static io.vavr.API.*;
 import static io.vavr.Predicates.instanceOf;
@@ -88,15 +85,17 @@ public class RegisterUserOperationProcessor extends BaseOperationProcessor imple
                 ));
     }
 
-    private void checkIfUserWithUsernameExists(RegisterUserInput input){
+    private void checkIfUserWithUsernameExists(RegisterUserInput input) {
         Optional<User> userWithUsername = userRepository.findByUsername(input.getUsername());
-        if (userWithUsername.isPresent())
+        if (userWithUsername.isPresent()) {
             throw new NotAvailableException(String.format("User with username %s already exists", input.getUsername()));
+        }
     }
 
-    private void checkIfUserWithEmailExists(RegisterUserInput input){
+    private void checkIfUserWithEmailExists(RegisterUserInput input) {
         Optional<User> userWithEmail = userRepository.findByEmail(input.getEmail());
-        if (userWithEmail.isPresent())
+        if (userWithEmail.isPresent()) {
             throw new NotAvailableException(String.format("User with email %s already exists", input.getEmail()));
+        }
     }
 }

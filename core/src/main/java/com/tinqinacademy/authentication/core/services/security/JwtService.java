@@ -1,19 +1,17 @@
 package com.tinqinacademy.authentication.core.services.security;
 
+import com.tinqinacademy.authentication.api.operations.exceptions.InvalidJwtException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
 
 @Service
 public class JwtService {
@@ -39,31 +37,34 @@ public class JwtService {
                 .compact();
     }
 
-    private String extractUserId(String token){
-        Claims claims =  extractAllClaims(token);
-        return (String) claims.get("user_id");
+    private String extractUserId(String token) {
+        Claims claims = extractAllClaims(token);
+        return claims.get("user_id").toString();
     }
 
-    private Claims extractAllClaims(String token) {
-        return Jwts
-                .parserBuilder()
-                .setSigningKey(getSignInKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+    public Claims extractAllClaims(String token) {
+        try {
+            return Jwts
+                    .parserBuilder()
+                    .setSigningKey(getSignInKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        } catch (Exception ex) {
+            throw new InvalidJwtException("JWT is not valid");
+        }
     }
 
-    public boolean isTokenValid(String token, String userId) {
-        String extractUserId = extractUserId(token);
-        return (extractUserId.equals(userId)) && !isTokenExpired(token);
-    }
-
-    private boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date(System.currentTimeMillis()));
+    public boolean isTokenValid(String token) {
+        try {
+            return extractExpiration(token).after(new Date(System.currentTimeMillis()));
+        } catch (InvalidJwtException ex) {
+            return false;
+        }
     }
 
     private Date extractExpiration(String token) {
-        Claims claims =  extractAllClaims(token);
+        Claims claims = extractAllClaims(token);
         return claims.getExpiration();
     }
 
