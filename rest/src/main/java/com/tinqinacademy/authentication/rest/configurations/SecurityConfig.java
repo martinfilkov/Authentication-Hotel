@@ -1,6 +1,5 @@
 package com.tinqinacademy.authentication.rest.configurations;
 
-//import com.tinqinacademy.authentication.core.configurations.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
