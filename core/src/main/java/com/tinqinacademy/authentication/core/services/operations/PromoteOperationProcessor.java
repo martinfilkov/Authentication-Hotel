@@ -74,8 +74,8 @@ public class PromoteOperationProcessor extends BaseOperationProcessor implements
         return userOptional.get();
     }
 
-    private void checkIfUserAlreadyAdmin(User user){
-        if (user.getRoleType() == RoleType.ADMIN){
+    private void checkIfUserAlreadyAdmin(User user) {
+        if (user.getRoleType() == RoleType.ADMIN) {
             throw new NotAvailableException("User already admin");
         }
     }

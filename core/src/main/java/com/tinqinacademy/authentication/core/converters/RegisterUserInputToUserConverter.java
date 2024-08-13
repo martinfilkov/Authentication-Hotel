@@ -17,6 +17,8 @@ public class RegisterUserInputToUserConverter implements Converter<RegisterUserI
         User.UserBuilder output = User.builder()
                 .username(input.getUsername())
                 .email(input.getEmail())
+                .firstName(input.getFirstName())
+                .lastName(input.getLastName())
                 .roleType(RoleType.USER)
                 .birthDate(input.getBirthDate())
                 .phoneNumber(input.getPhoneNumber());
