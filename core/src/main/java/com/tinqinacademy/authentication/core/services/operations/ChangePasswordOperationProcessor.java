@@ -2,10 +2,12 @@ package com.tinqinacademy.authentication.core.services.operations;
 
 import com.tinqinacademy.authentication.api.operations.base.Errors;
 import com.tinqinacademy.authentication.api.operations.exceptions.InvalidInputException;
+import com.tinqinacademy.authentication.api.operations.exceptions.NotAvailableException;
 import com.tinqinacademy.authentication.api.operations.exceptions.NotFoundException;
 import com.tinqinacademy.authentication.api.operations.operations.change.ChangePasswordInput;
 import com.tinqinacademy.authentication.api.operations.operations.change.ChangePasswordOperation;
 import com.tinqinacademy.authentication.api.operations.operations.change.ChangePasswordOutput;
+import com.tinqinacademy.authentication.api.operations.operations.recover.RecoverPasswordInput;
 import com.tinqinacademy.authentication.core.ErrorMapper;
 import com.tinqinacademy.authentication.core.services.BaseOperationProcessor;
 import com.tinqinacademy.authentication.persistence.entities.User;
@@ -20,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import static io.vavr.API.*;
@@ -28,9 +31,9 @@ import static io.vavr.Predicates.instanceOf;
 @Slf4j
 @Service
 public class ChangePasswordOperationProcessor extends BaseOperationProcessor implements ChangePasswordOperation {
-    private LoggedUser loggedUser;
-    private UserRepository userRepository;
-    private PasswordEncoder passwordEncoder;
+    private final LoggedUser loggedUser;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public ChangePasswordOperationProcessor(ConversionService conversionService,
                                             Validator validator,
