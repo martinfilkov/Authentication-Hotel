@@ -40,8 +40,7 @@ public class UserSecurityInterceptor implements HandlerInterceptor {
             return false;
         }
 
-        Claims claims = jwtService.extractAllClaims(jwtToken);
-        String userId = claims.get("user_id").toString();
+        String userId = jwtService.extractUserId(jwtToken);
         Optional<User> userOptional = userRepository.findById(UUID.fromString(userId));
         if (userOptional.isEmpty()) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);

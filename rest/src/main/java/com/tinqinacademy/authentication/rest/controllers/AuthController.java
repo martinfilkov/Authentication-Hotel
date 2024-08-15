@@ -10,6 +10,8 @@ import com.tinqinacademy.authentication.api.operations.operations.demote.DemoteU
 import com.tinqinacademy.authentication.api.operations.operations.demote.DemoteUserOutput;
 import com.tinqinacademy.authentication.api.operations.operations.login.LoginUserInput;
 import com.tinqinacademy.authentication.api.operations.operations.login.LoginUserOutput;
+import com.tinqinacademy.authentication.api.operations.operations.logout.LogoutUserInput;
+import com.tinqinacademy.authentication.api.operations.operations.logout.LogoutUserOutput;
 import com.tinqinacademy.authentication.api.operations.operations.promote.PromoteUserInput;
 import com.tinqinacademy.authentication.api.operations.operations.promote.PromoteUserOutput;
 import com.tinqinacademy.authentication.api.operations.operations.recover.RecoverPasswordInput;
@@ -43,6 +45,7 @@ public class AuthController extends BaseController {
     private final PromoteOperationProcessor promoteOperationProcessor;
     private final DemoteOperationProcessor demoteOperationProcessor;
     private final ValidateUserOperationProcessor validateUserOperationProcessor;
+    private final LogoutUserOperationProcessor logoutUserOperationProcessor;
     private final LoggedUser loggedUser;
 
     @ApiResponses(value = {
@@ -142,6 +145,21 @@ public class AuthController extends BaseController {
     @PostMapping(value = AuthenticationMappings.VALIDATE_TOKEN)
     public ResponseEntity<?> validateUser(@RequestBody ValidateUserInput input) {
         Either<Errors, ValidateUserOutput> output = validateUserOperationProcessor.process(input);
+
+        return handleResponse(output, HttpStatus.CREATED);
+    }
+
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Successfully validated user"),
+            @ApiResponse(responseCode = "403", description = "User not authorized")
+    })
+    @PostMapping(value = AuthenticationMappings.LOGOUT_USER)
+    public ResponseEntity<?> logoutUser(@RequestBody LogoutUserInput request) {
+        LogoutUserInput input = request.toBuilder()
+                .token(loggedUser.getToken())
+                .build();
+
+        Either<Errors, LogoutUserOutput> output = logoutUserOperationProcessor.process(input);
 
         return handleResponse(output, HttpStatus.CREATED);
     }

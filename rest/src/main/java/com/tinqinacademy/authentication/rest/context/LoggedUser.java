@@ -12,4 +12,5 @@ import org.springframework.web.context.annotation.RequestScope;
 @RequestScope
 public class LoggedUser {
     private User loggedUser;
+    private String token;
 }
