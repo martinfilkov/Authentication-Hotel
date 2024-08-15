@@ -9,4 +9,5 @@ public class AuthenticationMappings {
     public final static String PROMOTE_USER = "/api/auth/promote";
     public final static String DEMOTE_USER = "/api/auth/demote";
     public final static String VALIDATE_TOKEN = "/api/auth/validate-token";
+    public final static String LOGOUT_USER = "/api/auth/logout";
 }

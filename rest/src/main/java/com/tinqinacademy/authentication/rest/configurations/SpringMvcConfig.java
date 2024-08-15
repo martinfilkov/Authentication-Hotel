@@ -18,6 +18,7 @@ public class SpringMvcConfig implements WebMvcConfigurer {
                 .addPathPatterns(
                         AuthenticationMappings.CHANGE_PASSWORD,
                         AuthenticationMappings.DEMOTE_USER,
-                        AuthenticationMappings.PROMOTE_USER);
+                        AuthenticationMappings.PROMOTE_USER,
+                        AuthenticationMappings.LOGOUT_USER);
     }
 }
