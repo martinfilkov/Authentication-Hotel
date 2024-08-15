@@ -9,7 +9,6 @@ import com.tinqinacademy.authentication.api.operations.operations.recover.Recove
 import com.tinqinacademy.authentication.core.ErrorMapper;
 import com.tinqinacademy.authentication.core.services.BaseOperationProcessor;
 import com.tinqinacademy.authentication.persistence.entities.User;
-import com.tinqinacademy.authentication.persistence.models.LoggedUser;
 import com.tinqinacademy.authentication.persistence.repositories.UserRepository;
 import io.vavr.control.Either;
 import io.vavr.control.Try;
@@ -21,7 +20,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Objects;
 import java.util.Optional;
 
 import static io.vavr.API.*;
@@ -31,18 +29,15 @@ import static io.vavr.Predicates.instanceOf;
 @Service
 public class RecoverPasswordOperationProcessor extends BaseOperationProcessor implements RecoverPasswordOperation {
     private final UserRepository userRepository;
-    private final LoggedUser loggedUser;
     private final PasswordEncoder passwordEncoder;
 
     public RecoverPasswordOperationProcessor(ConversionService conversionService,
                                              Validator validator,
                                              ErrorMapper errorMapper,
                                              UserRepository userRepository,
-                                             LoggedUser loggedUser,
                                              PasswordEncoder passwordEncoder) {
         super(conversionService, validator, errorMapper);
         this.userRepository = userRepository;
-        this.loggedUser = loggedUser;
         this.passwordEncoder = passwordEncoder;
     }
 

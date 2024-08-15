@@ -1,4 +1,4 @@
-package com.tinqinacademy.authentication.persistence.models;
+package com.tinqinacademy.authentication.rest.context;
 
 import com.tinqinacademy.authentication.persistence.entities.User;
 import lombok.Getter;

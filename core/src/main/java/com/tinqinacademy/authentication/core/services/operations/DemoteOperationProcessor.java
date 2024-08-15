@@ -9,7 +9,6 @@ import com.tinqinacademy.authentication.api.operations.operations.demote.DemoteU
 import com.tinqinacademy.authentication.core.ErrorMapper;
 import com.tinqinacademy.authentication.core.services.BaseOperationProcessor;
 import com.tinqinacademy.authentication.persistence.entities.User;
-import com.tinqinacademy.authentication.persistence.models.LoggedUser;
 import com.tinqinacademy.authentication.persistence.models.RoleType;
 import com.tinqinacademy.authentication.persistence.repositories.UserRepository;
 import io.vavr.control.Either;
@@ -30,16 +29,13 @@ import static io.vavr.Predicates.instanceOf;
 @Service
 public class DemoteOperationProcessor extends BaseOperationProcessor implements DemoteUserOperation {
     private final UserRepository userRepository;
-    private final LoggedUser loggedUser;
 
     public DemoteOperationProcessor(ConversionService conversionService,
                                     Validator validator,
                                     ErrorMapper errorMapper,
-                                    UserRepository userRepository,
-                                    LoggedUser loggedUser) {
+                                    UserRepository userRepository) {
         super(conversionService, validator, errorMapper);
         this.userRepository = userRepository;
-        this.loggedUser = loggedUser;
     }
 
     @Override
@@ -51,8 +47,9 @@ public class DemoteOperationProcessor extends BaseOperationProcessor implements 
     private Either<Errors, DemoteUserOutput> demoteUser(DemoteUserInput input) {
         return Try.of(() -> {
                     log.info("Start demoteUser with input: {}", input);
-                    User user = getUserIfExists(input);
-                    checkIfUserDemotingHimself(user);
+                    User loggedUser = getUserIfExists(input.getLoggedUserId());
+                    User user = getUserIfExists(input.getUserId());
+                    checkIfUserDemotingHimself(user, loggedUser);
 
                     user.setRoleType(RoleType.USER);
                     userRepository.save(user);
@@ -69,16 +66,16 @@ public class DemoteOperationProcessor extends BaseOperationProcessor implements 
                 ));
     }
 
-    private User getUserIfExists(DemoteUserInput input) {
-        Optional<User> userOptional = userRepository.findById(UUID.fromString(input.getUserId()));
+    private User getUserIfExists(String id) {
+        Optional<User> userOptional = userRepository.findById(UUID.fromString(id));
         if (userOptional.isEmpty()) {
-            throw new NotFoundException(String.format("User with id %s not found", input.getUserId()));
+            throw new NotFoundException(String.format("User with id %s not found", id));
         }
         return userOptional.get();
     }
 
-    private void checkIfUserDemotingHimself(User user) {
-        if (user.getId().equals(loggedUser.getLoggedUser().getId())) {
+    private void checkIfUserDemotingHimself(User user, User loggedUser) {
+        if (user.getId().equals(loggedUser.getId())) {
             throw new NotAvailableException("Admin cannot demote himself");
         }
     }
