@@ -3,7 +3,7 @@ package com.tinqinacademy.authentication.rest.interceptor;
 import com.tinqinacademy.authentication.api.operations.base.AuthenticationMappings;
 import com.tinqinacademy.authentication.core.services.security.JwtService;
 import com.tinqinacademy.authentication.persistence.entities.User;
-import com.tinqinacademy.authentication.persistence.models.LoggedUser;
+import com.tinqinacademy.authentication.rest.context.LoggedUser;
 import com.tinqinacademy.authentication.persistence.models.RoleType;
 import com.tinqinacademy.authentication.persistence.repositories.UserRepository;
 import io.jsonwebtoken.Claims;

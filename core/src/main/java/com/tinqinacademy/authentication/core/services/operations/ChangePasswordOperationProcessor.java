@@ -2,16 +2,13 @@ package com.tinqinacademy.authentication.core.services.operations;
 
 import com.tinqinacademy.authentication.api.operations.base.Errors;
 import com.tinqinacademy.authentication.api.operations.exceptions.InvalidInputException;
-import com.tinqinacademy.authentication.api.operations.exceptions.NotAvailableException;
 import com.tinqinacademy.authentication.api.operations.exceptions.NotFoundException;
 import com.tinqinacademy.authentication.api.operations.operations.change.ChangePasswordInput;
 import com.tinqinacademy.authentication.api.operations.operations.change.ChangePasswordOperation;
 import com.tinqinacademy.authentication.api.operations.operations.change.ChangePasswordOutput;
-import com.tinqinacademy.authentication.api.operations.operations.recover.RecoverPasswordInput;
 import com.tinqinacademy.authentication.core.ErrorMapper;
 import com.tinqinacademy.authentication.core.services.BaseOperationProcessor;
 import com.tinqinacademy.authentication.persistence.entities.User;
-import com.tinqinacademy.authentication.persistence.models.LoggedUser;
 import com.tinqinacademy.authentication.persistence.repositories.UserRepository;
 import io.vavr.control.Either;
 import io.vavr.control.Try;
@@ -22,8 +19,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 import static io.vavr.API.*;
 import static io.vavr.Predicates.instanceOf;
@@ -31,18 +28,15 @@ import static io.vavr.Predicates.instanceOf;
 @Slf4j
 @Service
 public class ChangePasswordOperationProcessor extends BaseOperationProcessor implements ChangePasswordOperation {
-    private final LoggedUser loggedUser;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
     public ChangePasswordOperationProcessor(ConversionService conversionService,
                                             Validator validator,
                                             ErrorMapper errorMapper,
-                                            LoggedUser loggedUser,
                                             UserRepository userRepository,
                                             PasswordEncoder passwordEncoder) {
         super(conversionService, validator, errorMapper);
-        this.loggedUser = loggedUser;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
@@ -56,9 +50,10 @@ public class ChangePasswordOperationProcessor extends BaseOperationProcessor imp
     private Either<Errors, ChangePasswordOutput> changePassword(ChangePasswordInput input) {
         return Try.of(() -> {
                     log.info("Start changePassword with input: {}", input);
+                    User loggedUser = getLoggedUserIfValid(input);
 
-                    checkIfPasswordMatches(input);
-                    checkIfEmailMatches(input);
+                    checkIfPasswordMatches(input, loggedUser);
+                    checkIfEmailMatches(input, loggedUser);
                     checkIfNewPasswordIsTheSameAsOldOne(input);
 
                     String encodedNewPassword = passwordEncoder.encode(input.getNewPassword());
@@ -79,14 +74,22 @@ public class ChangePasswordOperationProcessor extends BaseOperationProcessor imp
                 ));
     }
 
-    private void checkIfPasswordMatches(ChangePasswordInput input) {
-        if (!passwordEncoder.matches(input.getOldPassword(), loggedUser.getLoggedUser().getPassword())) {
+    private User getLoggedUserIfValid(ChangePasswordInput input) {
+        Optional<User> userOptional = userRepository.findById(UUID.fromString(input.getUserId()));
+        if (userOptional.isEmpty()) {
+            throw new NotFoundException("Logged user not found");
+        }
+        return userOptional.get();
+    }
+
+    private void checkIfPasswordMatches(ChangePasswordInput input, User loggedUser) {
+        if (!passwordEncoder.matches(input.getOldPassword(), loggedUser.getPassword())) {
             throw new InvalidInputException("Current password does not match");
         }
     }
 
-    private void checkIfEmailMatches(ChangePasswordInput input) {
-        if (!loggedUser.getLoggedUser().getEmail().equals(input.getEmail())) {
+    private void checkIfEmailMatches(ChangePasswordInput input, User loggedUser) {
+        if (!loggedUser.getEmail().equals(input.getEmail())) {
             throw new InvalidInputException("Email provided does not match");
         }
     }

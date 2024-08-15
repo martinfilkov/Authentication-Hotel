@@ -19,6 +19,7 @@ import com.tinqinacademy.authentication.api.operations.operations.register.Regis
 import com.tinqinacademy.authentication.api.operations.operations.validate.ValidateUserInput;
 import com.tinqinacademy.authentication.api.operations.operations.validate.ValidateUserOutput;
 import com.tinqinacademy.authentication.core.services.operations.*;
+import com.tinqinacademy.authentication.rest.context.LoggedUser;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.vavr.control.Either;
@@ -42,6 +43,7 @@ public class AuthController extends BaseController {
     private final PromoteOperationProcessor promoteOperationProcessor;
     private final DemoteOperationProcessor demoteOperationProcessor;
     private final ValidateUserOperationProcessor validateUserOperationProcessor;
+    private final LoggedUser loggedUser;
 
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Successfully validated user"),
@@ -97,7 +99,11 @@ public class AuthController extends BaseController {
             @ApiResponse(responseCode = "403", description = "User not authorized")
     })
     @PostMapping(value = AuthenticationMappings.CHANGE_PASSWORD)
-    public ResponseEntity<?> changePassword(@RequestBody ChangePasswordInput input) {
+    public ResponseEntity<?> changePassword(@RequestBody ChangePasswordInput request) {
+        ChangePasswordInput input = request.toBuilder()
+                .userId(loggedUser.getLoggedUser().getId().toString())
+                .build();
+
         Either<Errors, ChangePasswordOutput> output = changePasswordOperationProcessor.process(input);
 
         return handleResponse(output, HttpStatus.CREATED);
@@ -119,7 +125,11 @@ public class AuthController extends BaseController {
             @ApiResponse(responseCode = "403", description = "User not authorized")
     })
     @PostMapping(value = AuthenticationMappings.DEMOTE_USER)
-    public ResponseEntity<?> demoteUser(@RequestBody DemoteUserInput input) {
+    public ResponseEntity<?> demoteUser(@RequestBody DemoteUserInput request) {
+        DemoteUserInput input = request.toBuilder()
+                .loggedUserId(loggedUser.getLoggedUser().getId().toString())
+                .build();
+
         Either<Errors, DemoteUserOutput> output = demoteOperationProcessor.process(input);
 
         return handleResponse(output, HttpStatus.CREATED);

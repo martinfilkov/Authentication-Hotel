@@ -1,5 +1,6 @@
 package com.tinqinacademy.authentication.api.operations.operations.change;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.tinqinacademy.authentication.api.operations.base.OperationInput;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -10,7 +11,7 @@ import lombok.*;
 @AllArgsConstructor
 @Getter
 @Setter
-@Builder
+@Builder(toBuilder = true)
 @ToString
 public class ChangePasswordInput implements OperationInput {
     @Size(min = 8, message = "Password must be at least 8 characters")
@@ -24,4 +25,7 @@ public class ChangePasswordInput implements OperationInput {
     @Email(message = "Email must be valid")
     @NotBlank(message = "Email cannot be blank")
     private String email;
+
+    @JsonIgnore
+    private String userId;
 }
