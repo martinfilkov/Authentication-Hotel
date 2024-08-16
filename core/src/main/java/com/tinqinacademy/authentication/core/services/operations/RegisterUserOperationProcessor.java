@@ -11,6 +11,8 @@ import com.tinqinacademy.authentication.persistence.entities.RegistrationCode;
 import com.tinqinacademy.authentication.persistence.entities.User;
 import com.tinqinacademy.authentication.persistence.repositories.RegistrationCodeRepository;
 import com.tinqinacademy.authentication.persistence.repositories.UserRepository;
+import com.tinqinacademy.email.api.operations.email.confirm.ConfirmEmailInput;
+import com.tinqinacademy.email.restexport.EmailRestClient;
 import io.vavr.control.Either;
 import io.vavr.control.Try;
 import jakarta.validation.Validator;
@@ -33,17 +35,20 @@ public class RegisterUserOperationProcessor extends BaseOperationProcessor imple
     private final UserRepository userRepository;
     private final RegistrationCodeRepository registrationCodeRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailRestClient emailRestClient;
 
     public RegisterUserOperationProcessor(ConversionService conversionService,
                                           Validator validator,
                                           ErrorMapper errorMapper,
                                           UserRepository userRepository,
                                           RegistrationCodeRepository registrationCodeRepository,
-                                          PasswordEncoder passwordEncoder) {
+                                          PasswordEncoder passwordEncoder,
+                                          EmailRestClient emailRestClient) {
         super(conversionService, validator, errorMapper);
         this.userRepository = userRepository;
         this.registrationCodeRepository = registrationCodeRepository;
         this.passwordEncoder = passwordEncoder;
+        this.emailRestClient = emailRestClient;
     }
 
     @Override
@@ -66,16 +71,16 @@ public class RegisterUserOperationProcessor extends BaseOperationProcessor imple
 
                     User savedUser = userRepository.save(user);
 
+                    String confirmCode = RandomStringUtils.randomAlphanumeric(12);
                     RegistrationCode registrationCode = RegistrationCode.builder()
-                            .code(RandomStringUtils.randomAlphanumeric(12))
+                            .code(confirmCode)
                             .email(savedUser.getEmail())
                             .build();
 
                     registrationCodeRepository.save(registrationCode);
+                    sendConfirmEmail(registrationCode);
 
-                    RegisterUserOutput output = RegisterUserOutput.builder()
-                            .id(savedUser.getId())
-                            .build();
+                    RegisterUserOutput output = conversionService.convert(savedUser, RegisterUserOutput.class);
 
                     log.info("End registerUser with output: {}", output);
                     return output;
@@ -85,6 +90,11 @@ public class RegisterUserOperationProcessor extends BaseOperationProcessor imple
                         Case($(instanceOf(NotAvailableException.class)), ex -> errorMapper.handleError(ex, HttpStatus.CONFLICT)),
                         Case($(), ex -> errorMapper.handleError(ex, HttpStatus.BAD_REQUEST))
                 ));
+    }
+
+    private void sendConfirmEmail(RegistrationCode registrationCode) {
+        ConfirmEmailInput input = conversionService.convert(registrationCode, ConfirmEmailInput.class);
+        emailRestClient.confirmEmail(input);
     }
 
     private void checkIfUserWithUsernameExists(RegisterUserInput input) {
@@ -102,7 +112,7 @@ public class RegisterUserOperationProcessor extends BaseOperationProcessor imple
     }
 
     private void checkIfUserIsAdult(RegisterUserInput input) {
-        if (input.getBirthDate().isAfter(LocalDate.now().minusYears(18))){
+        if (input.getBirthDate().isAfter(LocalDate.now().minusYears(18))) {
             throw new NotAvailableException("You need to be at least 18 to register");
         }
     }
