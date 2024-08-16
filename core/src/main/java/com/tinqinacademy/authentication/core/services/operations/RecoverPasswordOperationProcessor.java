@@ -10,6 +10,8 @@ import com.tinqinacademy.authentication.core.ErrorMapper;
 import com.tinqinacademy.authentication.core.services.BaseOperationProcessor;
 import com.tinqinacademy.authentication.persistence.entities.User;
 import com.tinqinacademy.authentication.persistence.repositories.UserRepository;
+import com.tinqinacademy.email.api.operations.email.recover.RecoverPasswordEmailInput;
+import com.tinqinacademy.email.restexport.EmailRestClient;
 import io.vavr.control.Either;
 import io.vavr.control.Try;
 import jakarta.validation.Validator;
@@ -30,15 +32,18 @@ import static io.vavr.Predicates.instanceOf;
 public class RecoverPasswordOperationProcessor extends BaseOperationProcessor implements RecoverPasswordOperation {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailRestClient emailRestClient;
 
     public RecoverPasswordOperationProcessor(ConversionService conversionService,
                                              Validator validator,
                                              ErrorMapper errorMapper,
                                              UserRepository userRepository,
-                                             PasswordEncoder passwordEncoder) {
+                                             PasswordEncoder passwordEncoder,
+                                             EmailRestClient emailRestClient) {
         super(conversionService, validator, errorMapper);
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.emailRestClient = emailRestClient;
     }
 
     @Override
@@ -52,10 +57,11 @@ public class RecoverPasswordOperationProcessor extends BaseOperationProcessor im
                     log.info("Start recoverPassword with input: {}", input);
                     User user = getUserByEmailIfExists(input);
 
-                    String generatedPassword = passwordEncoder.encode(RandomStringUtils.randomAlphanumeric(8));
-                    user.setPassword(generatedPassword);
+                    String generatedPassword = RandomStringUtils.randomAlphanumeric(8);
+                    user.setPassword(passwordEncoder.encode(generatedPassword));
                     userRepository.save(user);
 
+                    sendRecoveryEmail(user.getEmail(), generatedPassword);
                     RecoverPasswordOutput output = RecoverPasswordOutput.builder().build();
                     log.info("End recoverPassword with output: {}", output);
                     return output;
@@ -75,5 +81,13 @@ public class RecoverPasswordOperationProcessor extends BaseOperationProcessor im
             throw new NotFoundException(String.format("User with email %s not found", input.getEmail()));
         }
         return userOptional.get();
+    }
+
+    private void sendRecoveryEmail(String email, String generatedPassword) {
+        RecoverPasswordEmailInput emailInput = RecoverPasswordEmailInput.builder()
+                .emailTo(email)
+                .newPassword(generatedPassword)
+                .build();
+        emailRestClient.recoverPassword(emailInput);
     }
 }
