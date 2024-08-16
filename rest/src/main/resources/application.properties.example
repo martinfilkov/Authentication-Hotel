@@ -19,3 +19,5 @@ spring.boot.admin.client.instance.health-url=http://localhost:8082/actuator/heal
 
 security.jwt.secret-key=""
 security.jwt.expiration-time=300000
+
+email.service.url=http://localhost:8085
