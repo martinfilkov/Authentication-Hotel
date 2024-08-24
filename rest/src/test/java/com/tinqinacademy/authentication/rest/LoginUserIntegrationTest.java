@@ -1,11 +1,15 @@
 package com.tinqinacademy.authentication.rest;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tinqinacademy.authentication.api.operations.base.AuthenticationMappings;
+import com.tinqinacademy.authentication.api.operations.operations.login.LoginUserInput;
 import com.tinqinacademy.authentication.core.services.security.JwtService;
 import com.tinqinacademy.authentication.persistence.entities.User;
 import com.tinqinacademy.authentication.persistence.models.RoleType;
 import com.tinqinacademy.authentication.persistence.repositories.RegistrationCodeRepository;
 import com.tinqinacademy.authentication.persistence.repositories.UserRepository;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.jdbc.EmbeddedDatabaseConnection;
@@ -24,6 +28,7 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -39,21 +44,14 @@ public class LoginUserIntegrationTest {
     @Autowired
     private JwtService jwtService;
 
-    @MockBean
+    @Autowired
     private UserRepository userRepository;
 
-    @MockBean
-    private RegistrationCodeRepository registrationCodeRepository;
+    @Autowired
+    private ObjectMapper objectMapper;
 
-    @Test
-    public void testLoginUser_success() throws Exception {
-        String input = """
-                {
-                  "username": "test",
-                  "password": "testtest"
-                }
-                """;
-
+    @BeforeEach
+    public void createUser() {
         String password = passwordEncoder.encode("testtest");
         User user = User.builder()
                 .id(UUID.randomUUID())
@@ -66,16 +64,44 @@ public class LoginUserIntegrationTest {
                 .birthDate(LocalDate.now().minusYears(20))
                 .roleType(RoleType.ADMIN)
                 .build();
+        userRepository.save(user);
+    }
 
-        when(userRepository.findByUsername(any(String.class)))
-                .thenReturn(Optional.of(user));
+    @AfterEach
+    public void cleanUser() {
+        this.userRepository.deleteAll();
+    }
 
-        when(registrationCodeRepository.findByEmail(any(String.class)))
-                .thenReturn(Optional.empty());
+    @Test
+    public void testLoginUser_success() throws Exception {
+        LoginUserInput loginInput = LoginUserInput.builder()
+                .username("test")
+                .password("testtest")
+                .build();
+
+        String input = objectMapper.writeValueAsString(loginInput);
 
         mockMvc.perform(post(AuthenticationMappings.LOGIN_USER)
                 .content(input)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated());
+    }
+
+    @Test
+    public void testLoginUser_name_not_matching_failure() throws Exception {
+        LoginUserInput loginInput = LoginUserInput.builder()
+                .username("test123")
+                .password("testtest")
+                .build();
+
+        String input = objectMapper.writeValueAsString(loginInput);
+
+        mockMvc.perform(post(AuthenticationMappings.LOGIN_USER)
+                        .content(input)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(404))
+                .andExpect(jsonPath("$.errors[0].message")
+                        .value(String.format("User with username %s does not exist", loginInput.getUsername())));
     }
 }

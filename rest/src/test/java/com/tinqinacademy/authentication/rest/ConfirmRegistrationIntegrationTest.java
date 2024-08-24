@@ -1,8 +1,12 @@
 package com.tinqinacademy.authentication.rest;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tinqinacademy.authentication.api.operations.base.AuthenticationMappings;
+import com.tinqinacademy.authentication.api.operations.operations.confirm.ConfirmRegistrationInput;
 import com.tinqinacademy.authentication.persistence.entities.RegistrationCode;
 import com.tinqinacademy.authentication.persistence.repositories.RegistrationCodeRepository;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.jdbc.EmbeddedDatabaseConnection;
@@ -27,28 +31,51 @@ public class ConfirmRegistrationIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @Autowired
     private RegistrationCodeRepository registrationCodeRepository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @BeforeEach
+    public void createRegistrationToken() {
+        RegistrationCode code = RegistrationCode.builder()
+                .code("stringstring")
+                .email("test@test.com")
+                .build();
+        this.registrationCodeRepository.save(code);
+    }
+
+    @AfterEach
+    public void cleanCodes() {
+        this.registrationCodeRepository.deleteAll();
+    }
 
     @Test
     public void testConfirmRegistration_success() throws Exception {
-        String input = """
-                {
-                  "confirmationCode": "stringstring"
-                }
-                """;
-
-        RegistrationCode registrationCode = RegistrationCode.builder()
-                .email("test@test.test")
-                .code("stringstring")
+        ConfirmRegistrationInput confirmInput = ConfirmRegistrationInput.builder()
+                .confirmationCode("stringstring")
                 .build();
 
-        when(registrationCodeRepository.findByCode(any(String.class)))
-                .thenReturn(Optional.of(registrationCode));
+        String input = objectMapper.writeValueAsString(confirmInput);
 
         mockMvc.perform(post(AuthenticationMappings.CONFIRM_REGISTRATION)
                 .content(input)
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated());
+    }
+
+    @Test
+    public void testConfirmRegistration_code_not_found_failure() throws Exception {
+        ConfirmRegistrationInput confirmInput = ConfirmRegistrationInput.builder()
+                .confirmationCode("stringmelons")
+                .build();
+
+        String input = objectMapper.writeValueAsString(confirmInput);
+
+        mockMvc.perform(post(AuthenticationMappings.CONFIRM_REGISTRATION)
+                        .content(input)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
     }
 }
